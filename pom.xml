@@ -36,6 +36,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-core -->
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>aliyun-java-sdk-core</artifactId>
+			<version>3.6.0</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-ecs -->
 		<dependency>
 			<groupId>com.aliyun</groupId>
@@ -43,7 +50,22 @@
 			<version>4.6.7</version>
 		</dependency>
 
-	</dependencies>
+        <!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-ram -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-ram</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-vpc -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-vpc</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
+
+    </dependencies>
 
 	<build>
 		<plugins>
