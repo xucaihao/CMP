@@ -15,9 +15,8 @@ import static com.cmp.aliadapter.common.ErrorEnum.ERR_AUTH_INFO;
 
 public class AliClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(AliClient.class);
-
-    private static final boolean status = false;
+    //true(使用阿里云数据) false(使用模拟数据)
+    private static final boolean status = true;
 
     public static boolean getStatus() {
         return status;

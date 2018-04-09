@@ -10,6 +10,8 @@ import org.springframework.web.client.RestClientResponseException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -25,11 +27,18 @@ public class BaseController {
 
     private Function<HttpServletRequest, CompletionStage<CloudEntity>> fn = request ->
             CompletableFuture.supplyAsync(() ->
-                    Optional.ofNullable(request.getHeader(HEADER_CLOUD_INFO))
-                            .map(cloudInfo ->
-                                    JsonUtil.stringToObject(cloudInfo, CloudEntity.class))
-                            .orElseThrow(() -> new AliException(ERR_CLOUD_INFO_NOT_FOUND))
-            );
+            {
+                String cloudInfo;
+                try {
+                    cloudInfo = URLDecoder.decode(request.getHeader(HEADER_CLOUD_INFO), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    cloudInfo = null;
+                }
+                return Optional.ofNullable(cloudInfo)
+                        .map(info -> JsonUtil.stringToObject(info, CloudEntity.class))
+                        .orElseThrow(() -> new AliException(ERR_CLOUD_INFO_NOT_FOUND));
+            });
+
 
     /**
      * 从header中获取云实体
