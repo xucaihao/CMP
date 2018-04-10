@@ -10,7 +10,6 @@ import org.springframework.web.client.RestClientResponseException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -30,8 +29,9 @@ public class BaseController {
             {
                 String cloudInfo;
                 try {
-                    cloudInfo = URLDecoder.decode(request.getHeader(HEADER_CLOUD_INFO), "UTF-8");
-                } catch (UnsupportedEncodingException e) {
+                    cloudInfo = request.getHeader(HEADER_CLOUD_INFO);
+                    cloudInfo = URLDecoder.decode(cloudInfo, "UTF-8");
+                } catch (Exception e) {
                     cloudInfo = null;
                 }
                 return Optional.ofNullable(cloudInfo)
@@ -72,7 +72,7 @@ public class BaseController {
         String method = e1.getMethodName().contains("lambda")
                 ? e1.getMethodName().split("\\$")[1] : e1.getMethodName();
         final String log = e1.getFileName().replace(".java", "") + "::" + method;
-        logger.info("invoke: {}, error: {}", log, e);
+        logger.error("invoke: {}, error: {}", log, e);
         return dealThrowable(e, response);
     }
 
@@ -80,6 +80,14 @@ public class BaseController {
         int code = HttpStatus.BAD_REQUEST.value();
         String msg = "";
         if (null != e) {
+            if (e instanceof AliException) {
+                ErrorEnum errorEnum = ((AliException) e).getErrorEnum();
+                msg = errorEnum.toString();
+            }
+            if (e.getCause() instanceof AliException) {
+                ErrorEnum errorEnum = ((AliException) e.getCause()).getErrorEnum();
+                msg = errorEnum.toString();
+            }
             if (e instanceof RestClientResponseException) {
                 code = ((RestClientResponseException) e).getRawStatusCode();
                 msg = ((RestClientResponseException) e).getResponseBodyAsString();
