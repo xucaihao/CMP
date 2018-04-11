@@ -9,11 +9,10 @@ public interface InstanceService {
     /**
      * 查询实例列表
      *
-     * @param cloud    云
-     * @param regionId 地域
+     * @param cloud 云
      * @return 实例列表
      */
-    ResInstances describeInstances(CloudEntity cloud, String regionId);
+    ResInstances describeInstances(CloudEntity cloud);
 
     /**
      * 查询指定实例

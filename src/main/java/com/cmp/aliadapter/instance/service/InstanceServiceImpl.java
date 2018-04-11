@@ -3,60 +3,80 @@ package com.cmp.aliadapter.instance.service;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
-import com.cmp.aliadapter.common.AliClient;
-import com.cmp.aliadapter.common.AliSimulator;
-import com.cmp.aliadapter.common.CloudEntity;
-import com.cmp.aliadapter.common.ExceptionUtil;
+import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
+import com.cmp.aliadapter.region.model.res.ResRegions;
+import com.cmp.aliadapter.region.service.RegionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.cmp.aliadapter.common.AliClient.initClient;
 import static com.cmp.aliadapter.common.Constance.DEFAULT_PAGE_SIZE;
+import static com.cmp.aliadapter.common.Constance.TIME_OUT_SECONDS;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class InstanceServiceImpl implements InstanceService {
 
     private static final Logger logger = LoggerFactory.getLogger(InstanceServiceImpl.class);
 
+    @Autowired
+    private RegionService regionService;
+
     /**
      * 查询实例列表
      *
-     * @param cloud    云
-     * @param regionId 地域
+     * @param cloud 云
      * @return 实例列表
      */
     @Override
-    public ResInstances describeInstances(CloudEntity cloud, String regionId) {
+    public ResInstances describeInstances(CloudEntity cloud) {
         if (AliClient.getStatus()) {
-            //初始化
-            IAcsClient client = initClient(cloud, regionId);
-            //设置参数
-            DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
-            describeInstancesRequest.setRegionId(regionId);
-            describeInstancesRequest.setPageSize(DEFAULT_PAGE_SIZE);
-            AtomicInteger totalPage = new AtomicInteger(1);
-            List<DescribeInstancesResponse.Instance> instances = new ArrayList<>();
-            for (AtomicInteger pageNum = new AtomicInteger(1); pageNum.get() <= totalPage.get(); pageNum.incrementAndGet()) {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        describeInstancesRequest.setPageNumber(pageNum.get());
-                        DescribeInstancesResponse response =
-                                client.getAcsResponse(describeInstancesRequest);
-                        instances.addAll(response.getInstances());
-                        totalPage.set((response.getTotalCount() / DEFAULT_PAGE_SIZE) + 1);
-                    } catch (Exception e) {
-                        ExceptionUtil.dealException(e, pageNum.get());
-                    }
-                });
-            }
+            ResRegions resRegions = regionService.describeRegions(cloud);
+            List<CompletionStage<List<DescribeInstancesResponse.Instance>>> futures =
+                    resRegions.getRegions().stream().map(region ->
+                            CompletableFuture.supplyAsync(() -> {
+                                //初始化
+                                IAcsClient client = initClient(cloud, region.getRegionId());
+                                //设置参数
+                                DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
+                                describeInstancesRequest.setRegionId(region.getRegionId());
+                                describeInstancesRequest.setPageSize(DEFAULT_PAGE_SIZE);
+                                AtomicInteger totalPage = new AtomicInteger(1);
+                                List<DescribeInstancesResponse.Instance> instances = new ArrayList<>();
+                                for (AtomicInteger pageNum = new AtomicInteger(1);
+                                     pageNum.get() <= totalPage.get();
+                                     pageNum.incrementAndGet()) {
+                                    try {
+                                        CompletableFuture.runAsync(() -> {
+                                            try {
+                                                describeInstancesRequest.setPageNumber(pageNum.get());
+                                                DescribeInstancesResponse response =
+                                                        client.getAcsResponse(describeInstancesRequest);
+                                                instances.addAll(response.getInstances());
+                                                totalPage.set((response.getTotalCount() / DEFAULT_PAGE_SIZE) + 1);
+                                            } catch (Exception e) {
+                                                ExceptionUtil.dealException(e, pageNum.get());
+                                            }
+                                        }).get(TIME_OUT_SECONDS, TimeUnit.SECONDS);
+                                    } catch (Exception e) {
+                                        break;
+                                    }
+                                }
+                                return instances;
+                            })
+                    ).collect(toList());
+            List<DescribeInstancesResponse.Instance> instances = CommonUtil.aggregateList(CommonUtil.joinRes(futures));
             return new ResInstances(instances);
         } else {
             List<DescribeInstancesResponse.Instance> instances =
