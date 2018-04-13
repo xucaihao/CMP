@@ -3,6 +3,7 @@ package com.cmp.aliadapter.instance.service;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
+import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
@@ -42,7 +43,12 @@ public class InstanceServiceImpl implements InstanceService {
     @Override
     public ResInstances describeInstances(CloudEntity cloud) {
         if (AliClient.getStatus()) {
-            ResRegions resRegions = regionService.describeRegions(cloud);
+            List<DescribeRegionsResponse.Region> regions = new ArrayList<>();
+            DescribeRegionsResponse.Region regionInfo = new DescribeRegionsResponse.Region();
+            regionInfo.setRegionId("cn-beijing");
+            regions.add(regionInfo);
+            ResRegions resRegions = new ResRegions(regions);
+//            ResRegions resRegions = regionService.describeRegions(cloud);
             List<CompletionStage<List<DescribeInstancesResponse.Instance>>> futures =
                     resRegions.getRegions().stream().map(region ->
                             CompletableFuture.supplyAsync(() -> {
