@@ -69,6 +69,20 @@ public class InstanceServiceImpl implements InstanceService {
                                                 describeInstancesRequest.setPageNumber(pageNum.get());
                                                 DescribeInstancesResponse response =
                                                         client.getAcsResponse(describeInstancesRequest);
+                                                response.getInstances().forEach(vo -> {
+                                                    List<String> privateIps = vo.getNetworkInterfaces().stream()
+                                                            .map(DescribeInstancesResponse.Instance.NetworkInterface::getPrimaryIpAddress)
+                                                            .collect(toList());
+                                                    vo.setInnerIpAddress(privateIps);
+                                                    String createdTime = vo.getCreationTime()
+                                                            .replace("T", " ")
+                                                            .replace("Z", " ");
+                                                    vo.setCreationTime(createdTime);
+                                                    String expiredTime = vo.getExpiredTime()
+                                                            .replace("T", " ")
+                                                            .replace("Z", " ");
+                                                    vo.setExpiredTime(expiredTime);
+                                                });
                                                 instances.addAll(response.getInstances());
                                                 totalPage.set((response.getTotalCount() / DEFAULT_PAGE_SIZE) + 1);
                                             } catch (Exception e) {
