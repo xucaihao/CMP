@@ -29,6 +29,8 @@ public class AliClient {
                 .orElseThrow(() -> new AliException(ERR_AUTH_INFO));
         String accessKey = authInfo.path(ACCESS_KEY).asText();
         String secret = authInfo.path(SECRET).asText();
+//        String accessKey = "LTAIRmS5yVTpnl5m";
+//        String secret = "uroHDLzk1Ln8HoR9d1NYEt3e4bJLUR";
         DefaultProfile profile = DefaultProfile.getProfile(regionId, accessKey, secret);
         return new DefaultAcsClient(profile);
     }
