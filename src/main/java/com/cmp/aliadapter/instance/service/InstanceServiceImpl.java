@@ -1,10 +1,10 @@
 package com.cmp.aliadapter.instance.service;
 
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
-import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
-import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
+import com.aliyuncs.ecs.model.v20140526.*;
 import com.cmp.aliadapter.common.*;
+import com.cmp.aliadapter.instance.model.req.ReqCloseInstance;
+import com.cmp.aliadapter.instance.model.req.ReqStartInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
 import com.cmp.aliadapter.region.model.res.ResRegions;
@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -139,5 +141,62 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
+    /**
+     * 关闭实例
+     *
+     * @param cloud            云（用户提供ak、sk）
+     * @param reqCloseInstance 请求体
+     */
+    @Override
+    public void closeInstance(CloudEntity cloud, ReqCloseInstance reqCloseInstance) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqCloseInstance.getRegionId());
+            //设置参数
+            StopInstanceRequest stopInstanceRequest = new StopInstanceRequest();
+            stopInstanceRequest.setRegionId(reqCloseInstance.getRegionId());
+            stopInstanceRequest.setInstanceId(reqCloseInstance.getInstanceId());
+            stopInstanceRequest.setConfirmStop(reqCloseInstance.isForceStop());
+            // 发起请求
+            try {
+                client.getAcsResponse(stopInstanceRequest);
+            } catch (Exception e) {
+                logger.error("closeInstance error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        } else {
+            Map<String, Object> values = new HashMap<>(16);
+            values.put("status", "stopped");
+            AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqCloseInstance.getInstanceId(), values);
+        }
+    }
 
+    /**
+     * 启动实例
+     *
+     * @param cloud            云（用户提供ak、sk）
+     * @param reqStartInstance 请求体
+     */
+    @Override
+    public void startInstance(CloudEntity cloud, ReqStartInstance reqStartInstance) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqStartInstance.getRegionId());
+            //设置参数
+            StartInstanceRequest startInstanceRequest = new StartInstanceRequest();
+            startInstanceRequest.setRegionId(reqStartInstance.getRegionId());
+            startInstanceRequest.setInstanceId(reqStartInstance.getInstanceId());
+            // 发起请求
+            try {
+                client.getAcsResponse(startInstanceRequest);
+            } catch (Exception e) {
+                logger.error("startInstance error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        } else {
+            Map<String, Object> values = new HashMap<>(16);
+            values.put("status", "running");
+            AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqStartInstance.getInstanceId(), values);
+        }
+    }
 }
