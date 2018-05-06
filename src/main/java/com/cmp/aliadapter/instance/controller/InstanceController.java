@@ -9,6 +9,7 @@ import com.cmp.aliadapter.instance.service.InstanceService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -45,6 +46,28 @@ public class InstanceController extends BaseController {
             final HttpServletResponse response) {
         return getCloudEntity(request)
                 .thenApply(instanceService::describeInstances)
+                .thenApply(x -> okFormat(OK.value(), x, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
+
+    /**
+     * 查询指定主机
+     *
+     * @param request    http请求 http请求
+     * @param response   http响应 http响应
+     * @param regionId   区域id
+     * @param instanceId 实例id
+     * @return 指定主机
+     */
+    @RequestMapping("{regionId}/instances/{instanceId}")
+    @ResponseBody
+    public CompletionStage<JsonNode> describeInstanceAttribute(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            @PathVariable final String regionId,
+            @PathVariable final String instanceId) {
+        return getCloudEntity(request)
+                .thenApply(cloud -> instanceService.describeInstance(cloud, regionId, instanceId))
                 .thenApply(x -> okFormat(OK.value(), x, response))
                 .exceptionally(e -> badFormat(e, response));
     }

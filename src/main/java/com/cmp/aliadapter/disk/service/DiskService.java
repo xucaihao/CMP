@@ -1,16 +1,15 @@
 package com.cmp.aliadapter.disk.service;
 
 import com.cmp.aliadapter.common.CloudEntity;
-import com.cmp.aliadapter.eip.modle.ResEipAddresses;
+import com.cmp.aliadapter.disk.model.res.ResDisks;
 
 public interface DiskService {
 
     /**
-     * 查询实例列表
+     * 查询硬盘列表
      *
      * @param cloud    云
-     * @param regionId 地域
-     * @return 实例列表
+     * @return 硬盘列表
      */
-    ResEipAddresses describeDisks(CloudEntity cloud, String regionId);
+    ResDisks describeDisks(CloudEntity cloud);
 }
