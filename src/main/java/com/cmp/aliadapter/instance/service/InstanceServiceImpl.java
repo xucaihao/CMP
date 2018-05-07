@@ -5,6 +5,7 @@ import com.aliyuncs.ecs.model.v20140526.*;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.instance.model.req.ReqCloseInstance;
 import com.cmp.aliadapter.instance.model.req.ReqModifyInstance;
+import com.cmp.aliadapter.instance.model.req.ReqRebootInstance;
 import com.cmp.aliadapter.instance.model.req.ReqStartInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
@@ -198,6 +199,36 @@ public class InstanceServiceImpl implements InstanceService {
             Map<String, Object> values = new HashMap<>(16);
             values.put("status", "running");
             AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqStartInstance.getInstanceId(), values);
+        }
+    }
+
+    /**
+     * 重启实例
+     *
+     * @param cloud             云
+     * @param reqRebootInstance 请求体
+     */
+    @Override
+    public void rebootInstance(CloudEntity cloud, ReqRebootInstance reqRebootInstance) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqRebootInstance.getRegionId());
+            //设置参数
+            RebootInstanceRequest rebootInstanceRequest = new RebootInstanceRequest();
+            rebootInstanceRequest.setRegionId(reqRebootInstance.getRegionId());
+            rebootInstanceRequest.setInstanceId(reqRebootInstance.getInstanceId());
+            rebootInstanceRequest.setForceStop(reqRebootInstance.isForceReboot());
+            // 发起请求
+            try {
+                client.getAcsResponse(rebootInstanceRequest);
+            } catch (Exception e) {
+                logger.error("rebootInstance error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        } else {
+            Map<String, Object> values = new HashMap<>(16);
+            values.put("status", "running");
+            AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqRebootInstance.getInstanceId(), values);
         }
     }
 
