@@ -4,7 +4,16 @@ public class ReqModifyInstance {
 
     private String instanceId;
     private String regionId;
+
+    /**
+     * 修改名称
+     */
     private String instanceName;
+
+    /**
+     * 修改密码
+     */
+    private String password;
 
     public String getInstanceId() {
         return instanceId;
@@ -28,5 +37,13 @@ public class ReqModifyInstance {
 
     public void setInstanceName(String instanceName) {
         this.instanceName = instanceName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

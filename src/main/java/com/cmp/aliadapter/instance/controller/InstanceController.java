@@ -138,4 +138,26 @@ public class InstanceController extends BaseController {
                 .thenApply(x -> okFormat(OK.value(), null, response))
                 .exceptionally(e -> badFormat(e, response));
     }
+
+    /**
+     * 重置实例密码
+     *
+     * @param request  http请求
+     * @param response http响应
+     * @return 操作结果
+     * @throws IOException 异常
+     */
+    @RequestMapping("/instances/resetPassword")
+    @ResponseBody
+    public CompletionStage<JsonNode> resetInstancesPassword(
+            final HttpServletRequest request,
+            final HttpServletResponse response) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IOUtils.read(reader);
+        ReqModifyInstance reqModifyInstance = JsonUtil.stringToObject(body, ReqModifyInstance.class);
+        return getCloudEntity(request)
+                .thenAccept(cloud -> instanceService.resetInstancesPassword(cloud, reqModifyInstance))
+                .thenApply(x -> okFormat(OK.value(), null, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
 }

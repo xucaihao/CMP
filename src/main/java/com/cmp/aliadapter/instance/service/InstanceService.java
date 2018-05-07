@@ -46,8 +46,16 @@ public interface InstanceService {
     /**
      * 修改实例名称
      *
-     * @param cloud            云（用户提供ak、sk）
+     * @param cloud             云（用户提供ak、sk）
      * @param reqModifyInstance 请求体
      */
     void modifyInstanceName(CloudEntity cloud, ReqModifyInstance reqModifyInstance);
+
+    /**
+     * 重置实例密码
+     *
+     * @param cloud             云（用户提供ak、sk）
+     * @param reqModifyInstance 请求体
+     */
+    void resetInstancesPassword(CloudEntity cloud, ReqModifyInstance reqModifyInstance);
 }

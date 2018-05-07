@@ -231,4 +231,32 @@ public class InstanceServiceImpl implements InstanceService {
             AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqModifyInstance.getInstanceId(), values);
         }
     }
+
+    /**
+     * 重置实例密码
+     *
+     * @param cloud             云（用户提供ak、sk）
+     * @param reqModifyInstance 请求体
+     */
+    @Override
+    public void resetInstancesPassword(CloudEntity cloud, ReqModifyInstance reqModifyInstance) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqModifyInstance.getRegionId());
+            //设置参数
+            ModifyInstanceAttributeRequest modifyInstanceAttributeRequest =
+                    new ModifyInstanceAttributeRequest();
+            modifyInstanceAttributeRequest.setRegionId(reqModifyInstance.getRegionId());
+            modifyInstanceAttributeRequest.setInstanceId(reqModifyInstance.getInstanceId());
+            modifyInstanceAttributeRequest.setPassword(reqModifyInstance.getPassword());
+            // 发起请求
+            try {
+                client.getAcsResponse(modifyInstanceAttributeRequest);
+            } catch (Exception e) {
+                logger.error("resetInstancesPassword error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        }
+    }
+
 }
