@@ -2,6 +2,7 @@ package com.cmp.aliadapter.instance.service;
 
 import com.cmp.aliadapter.common.CloudEntity;
 import com.cmp.aliadapter.instance.model.req.ReqCloseInstance;
+import com.cmp.aliadapter.instance.model.req.ReqModifyInstance;
 import com.cmp.aliadapter.instance.model.req.ReqStartInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
@@ -41,4 +42,12 @@ public interface InstanceService {
      * @param reqStartInstance 请求体
      */
     void startInstance(CloudEntity cloud, ReqStartInstance reqStartInstance);
+
+    /**
+     * 修改实例名称
+     *
+     * @param cloud            云（用户提供ak、sk）
+     * @param reqModifyInstance 请求体
+     */
+    void modifyInstanceName(CloudEntity cloud, ReqModifyInstance reqModifyInstance);
 }

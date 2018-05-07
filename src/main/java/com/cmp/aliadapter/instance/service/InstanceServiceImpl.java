@@ -4,6 +4,7 @@ import com.aliyuncs.IAcsClient;
 import com.aliyuncs.ecs.model.v20140526.*;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.instance.model.req.ReqCloseInstance;
+import com.cmp.aliadapter.instance.model.req.ReqModifyInstance;
 import com.cmp.aliadapter.instance.model.req.ReqStartInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstance;
 import com.cmp.aliadapter.instance.model.res.ResInstances;
@@ -197,6 +198,37 @@ public class InstanceServiceImpl implements InstanceService {
             Map<String, Object> values = new HashMap<>(16);
             values.put("status", "running");
             AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqStartInstance.getInstanceId(), values);
+        }
+    }
+
+    /**
+     * 修改实例名称
+     *
+     * @param cloud             云（用户提供ak、sk）
+     * @param reqModifyInstance 请求体
+     */
+    @Override
+    public void modifyInstanceName(CloudEntity cloud, ReqModifyInstance reqModifyInstance) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqModifyInstance.getRegionId());
+            //设置参数
+            ModifyInstanceAttributeRequest modifyInstanceAttributeRequest =
+                    new ModifyInstanceAttributeRequest();
+            modifyInstanceAttributeRequest.setRegionId(reqModifyInstance.getRegionId());
+            modifyInstanceAttributeRequest.setInstanceId(reqModifyInstance.getInstanceId());
+            modifyInstanceAttributeRequest.setInstanceName(reqModifyInstance.getInstanceName());
+            // 发起请求
+            try {
+                client.getAcsResponse(modifyInstanceAttributeRequest);
+            } catch (Exception e) {
+                logger.error("modifyInstanceName error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        } else {
+            Map<String, Object> values = new HashMap<>(16);
+            values.put("instanceName", reqModifyInstance.getInstanceName());
+            AliSimulator.modify(DescribeInstancesResponse.Instance.class, reqModifyInstance.getInstanceId(), values);
         }
     }
 }
