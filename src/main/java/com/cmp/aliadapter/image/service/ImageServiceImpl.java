@@ -1,17 +1,24 @@
 package com.cmp.aliadapter.image.service;
 
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.*;
+import com.aliyuncs.ecs.model.v20140526.CreateImageRequest;
+import com.aliyuncs.ecs.model.v20140526.DescribeImagesRequest;
+import com.aliyuncs.ecs.model.v20140526.DescribeImagesResponse;
+import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
 import com.cmp.aliadapter.common.*;
+import com.cmp.aliadapter.image.model.req.ReqCreImage;
 import com.cmp.aliadapter.image.model.res.ImageInfo;
 import com.cmp.aliadapter.image.model.res.ResImages;
-import com.cmp.aliadapter.instance.model.res.ResInstances;
 import com.cmp.aliadapter.region.model.res.ResRegions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +31,8 @@ import static java.util.stream.Collectors.toList;
 
 @Service
 public class ImageServiceImpl implements ImageService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImageServiceImpl.class);
 
     private ImageInfo convertImage(DescribeImagesResponse.Image image, String regionId) {
         ImageInfo resImage = new ImageInfo();
@@ -102,6 +111,38 @@ public class ImageServiceImpl implements ImageService {
         } else {
             List<ImageInfo> images = AliSimulator.getAll(ImageInfo.class);
             return new ResImages(images);
+        }
+    }
+
+    /**
+     * 创建镜像
+     *
+     * @param cloud       云
+     * @param reqCreImage 请求体
+     */
+    @Override
+    public void createImage(CloudEntity cloud, ReqCreImage reqCreImage) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqCreImage.getRegionId());
+            //设置参数
+            CreateImageRequest createImageRequest = new CreateImageRequest();
+            createImageRequest.setRegionId(reqCreImage.getRegionId());
+            createImageRequest.setInstanceId(reqCreImage.getInstanceId());
+            createImageRequest.setImageName(reqCreImage.getImageName());
+            createImageRequest.setDescription(reqCreImage.getDescription());
+            // 发起请求
+            try {
+                client.getAcsResponse(createImageRequest);
+            } catch (Exception e) {
+                logger.error("createImage error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        } else {
+            Map<String, Object> values = new HashMap<>(16);
+            values.put("imageName", reqCreImage.getImageName());
+            values.put("regionId", reqCreImage.getRegionId());
+            AliSimulator.create(ImageInfo.class, reqCreImage.getInstanceId(), values);
         }
     }
 }
