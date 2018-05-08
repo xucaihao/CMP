@@ -4,7 +4,9 @@ import com.aliyuncs.IAcsClient;
 import com.aliyuncs.ecs.model.v20140526.DescribeDisksRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeDisksResponse;
 import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
+import com.aliyuncs.ecs.model.v20140526.ModifyDiskAttributeRequest;
 import com.cmp.aliadapter.common.*;
+import com.cmp.aliadapter.disk.model.req.ReqModifyDisk;
 import com.cmp.aliadapter.disk.model.res.DiskInfo;
 import com.cmp.aliadapter.disk.model.res.ResDisks;
 import com.cmp.aliadapter.region.model.res.ResRegions;
@@ -116,4 +118,29 @@ public class DiskServiceImpl implements DiskService {
         }
     }
 
+    /**
+     * 修改硬盘名称
+     *
+     * @param cloud         云（用户提供ak、sk）
+     * @param reqModifyDisk 请求体
+     */
+    @Override
+    public void modifyDiskName(CloudEntity cloud, ReqModifyDisk reqModifyDisk) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqModifyDisk.getRegionId());
+            //设置参数
+            ModifyDiskAttributeRequest modifyDiskAttributeRequest = new ModifyDiskAttributeRequest();
+            modifyDiskAttributeRequest.setRegionId(reqModifyDisk.getRegionId());
+            modifyDiskAttributeRequest.setDiskId(reqModifyDisk.getDiskId());
+            modifyDiskAttributeRequest.setDiskName(reqModifyDisk.getDiskName());
+            // 发起请求
+            try {
+                client.getAcsResponse(modifyDiskAttributeRequest);
+            } catch (Exception e) {
+                logger.error("modifyDiskName error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        }
+    }
 }
