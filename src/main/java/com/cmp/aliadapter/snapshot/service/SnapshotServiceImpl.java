@@ -1,14 +1,18 @@
 package com.cmp.aliadapter.snapshot.service;
 
 import com.aliyuncs.IAcsClient;
+import com.aliyuncs.ecs.model.v20140526.CreateSnapshotRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
 import com.aliyuncs.ecs.model.v20140526.DescribeSnapshotsRequest;
 import com.aliyuncs.ecs.model.v20140526.DescribeSnapshotsResponse;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.region.model.res.ResRegions;
 import com.cmp.aliadapter.region.service.RegionService;
-import com.cmp.aliadapter.snapshot.model.ResSnapshots;
-import com.cmp.aliadapter.snapshot.model.SnapshotInfo;
+import com.cmp.aliadapter.snapshot.model.req.ReqCreSnapshot;
+import com.cmp.aliadapter.snapshot.model.res.ResSnapshots;
+import com.cmp.aliadapter.snapshot.model.res.SnapshotInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -27,6 +31,8 @@ import static java.util.stream.Collectors.toList;
 
 @Service
 public class SnapshotServiceImpl implements SnapshotService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SnapshotServiceImpl.class);
 
     @Autowired
     private RegionService regionService;
@@ -106,6 +112,32 @@ public class SnapshotServiceImpl implements SnapshotService {
         } else {
             List<SnapshotInfo> snapshots = AliSimulator.getAll(SnapshotInfo.class);
             return new ResSnapshots(snapshots);
+        }
+    }
+
+    /**
+     * 创建快照
+     *
+     * @param cloud          云
+     * @param reqCreSnapshot 请求体
+     */
+    @Override
+    public void createSnapshot(CloudEntity cloud, ReqCreSnapshot reqCreSnapshot) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, reqCreSnapshot.getRegionId());
+            //设置参数
+            CreateSnapshotRequest createSnapshotRequest = new CreateSnapshotRequest();
+            createSnapshotRequest.setRegionId(reqCreSnapshot.getRegionId());
+            createSnapshotRequest.setDiskId(reqCreSnapshot.getDiskId());
+            createSnapshotRequest.setSnapshotName(reqCreSnapshot.getSnapshotName());
+            // 发起请求
+            try {
+                client.getAcsResponse(createSnapshotRequest);
+            } catch (Exception e) {
+                logger.error("createSnapshot error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
         }
     }
 }

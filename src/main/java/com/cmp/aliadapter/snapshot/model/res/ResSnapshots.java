@@ -1,4 +1,4 @@
-package com.cmp.aliadapter.snapshot.model;
+package com.cmp.aliadapter.snapshot.model.res;
 
 import java.util.List;
 
