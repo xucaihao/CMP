@@ -8,9 +8,7 @@ import com.cmp.aliadapter.snapshot.service.SnapshotService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,6 +45,28 @@ public class SnapshotController extends BaseController {
     }
 
     /**
+     * 查询指定快照
+     *
+     * @param request    http请求 http请求
+     * @param response   http响应 http响应
+     * @param regionId   区域id
+     * @param snapshotId 快照id
+     * @return 指定快照信息
+     */
+    @RequestMapping("/{regionId}/snapshots/{snapshotId}")
+    @ResponseBody
+    public CompletionStage<JsonNode> describeSnapshotAttribute(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            @PathVariable String regionId,
+            @PathVariable String snapshotId) {
+        return getCloudEntity(request)
+                .thenAccept(cloud -> snapshotService.describeSnapshotAttribute(cloud, regionId, snapshotId))
+                .thenApply(x -> okFormat(OK.value(), x, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
+
+    /**
      * 创建快照
      *
      * @param request  http请求
@@ -65,6 +85,28 @@ public class SnapshotController extends BaseController {
         return getCloudEntity(request)
                 .thenAccept(cloud -> snapshotService.createSnapshot(cloud, reqCreSnapshot))
                 .thenApply(x -> okFormat(OK.value(), null, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
+
+    /**
+     * 删除快照
+     *
+     * @param request    http请求 http请求
+     * @param response   http响应 http响应
+     * @param regionId   区域id
+     * @param snapshotId 快照id
+     * @return 操作结果
+     */
+    @DeleteMapping("/{regionId}/snapshots/{snapshotId}")
+    @ResponseBody
+    public CompletionStage<JsonNode> deleteSnapshot(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            @PathVariable String regionId,
+            @PathVariable String snapshotId) {
+        return getCloudEntity(request)
+                .thenAccept(cloud -> snapshotService.deleteSnapshot(cloud, regionId, snapshotId))
+                .thenApply(x -> okFormat(OK.value(), x, response))
                 .exceptionally(e -> badFormat(e, response));
     }
 

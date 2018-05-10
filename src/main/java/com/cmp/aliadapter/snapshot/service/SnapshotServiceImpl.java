@@ -1,14 +1,12 @@
 package com.cmp.aliadapter.snapshot.service;
 
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.CreateSnapshotRequest;
-import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
-import com.aliyuncs.ecs.model.v20140526.DescribeSnapshotsRequest;
-import com.aliyuncs.ecs.model.v20140526.DescribeSnapshotsResponse;
+import com.aliyuncs.ecs.model.v20140526.*;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.region.model.res.ResRegions;
 import com.cmp.aliadapter.region.service.RegionService;
 import com.cmp.aliadapter.snapshot.model.req.ReqCreSnapshot;
+import com.cmp.aliadapter.snapshot.model.res.ResSnapshot;
 import com.cmp.aliadapter.snapshot.model.res.ResSnapshots;
 import com.cmp.aliadapter.snapshot.model.res.SnapshotInfo;
 import org.slf4j.Logger;
@@ -116,6 +114,39 @@ public class SnapshotServiceImpl implements SnapshotService {
     }
 
     /**
+     * 查询指定快照
+     *
+     * @param cloud      云（用户提供ak、sk）
+     * @param regionId   区域id
+     * @param snapshotId 快照id
+     * @return 指定快照信息
+     */
+    @Override
+    public ResSnapshot describeSnapshotAttribute(CloudEntity cloud, String regionId, String snapshotId) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, regionId);
+            //设置参数
+            DescribeSnapshotsRequest describeSnapshotsRequest = new DescribeSnapshotsRequest();
+            describeSnapshotsRequest.setRegionId(regionId);
+            describeSnapshotsRequest.setSnapshotIds("[\"" + snapshotId + "\"]");
+            try {
+                DescribeSnapshotsResponse response =
+                        client.getAcsResponse(describeSnapshotsRequest);
+                SnapshotInfo snapshotInfo = convertSnapshot(response.getSnapshots().get(0), regionId);
+                return new ResSnapshot(snapshotInfo);
+            } catch (Exception e) {
+                logger.error("describeSnapshotAttribute error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+                return null;
+            }
+        } else {
+            SnapshotInfo snapshot = AliSimulator.get(SnapshotInfo.class, snapshotId);
+            return new ResSnapshot(snapshot);
+        }
+    }
+
+    /**
      * 创建快照
      *
      * @param cloud          云
@@ -136,6 +167,33 @@ public class SnapshotServiceImpl implements SnapshotService {
                 client.getAcsResponse(createSnapshotRequest);
             } catch (Exception e) {
                 logger.error("createSnapshot error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
+        }
+    }
+
+
+    /**
+     * 删除快照
+     *
+     * @param cloud      云（用户提供ak、sk）
+     * @param regionId   区域id
+     * @param snapshotId 快照id
+     */
+    @Override
+    public void deleteSnapshot(CloudEntity cloud, String regionId, String snapshotId) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, regionId);
+            //设置参数
+            DeleteSnapshotRequest deleteSnapshotRequest = new DeleteSnapshotRequest();
+            deleteSnapshotRequest.setRegionId(regionId);
+            deleteSnapshotRequest.setSnapshotId(snapshotId);
+            // 发起请求
+            try {
+                client.getAcsResponse(deleteSnapshotRequest);
+            } catch (Exception e) {
+                logger.error("deleteSnapshot error: {}", e.getMessage());
                 ExceptionUtil.dealException(e);
             }
         }
