@@ -91,8 +91,8 @@ public class SnapshotController extends BaseController {
     /**
      * 删除快照
      *
-     * @param request    http请求 http请求
-     * @param response   http响应 http响应
+     * @param request    http请求
+     * @param response   http响应
      * @param regionId   区域id
      * @param snapshotId 快照id
      * @return 操作结果

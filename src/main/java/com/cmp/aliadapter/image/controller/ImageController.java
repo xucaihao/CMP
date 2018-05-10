@@ -8,9 +8,7 @@ import com.cmp.aliadapter.image.service.ImageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,6 +49,28 @@ public class ImageController extends BaseController {
     }
 
     /**
+     * 查询指定镜像
+     *
+     * @param request  http请求 http请求
+     * @param response http响应 http响应
+     * @param regionId 区域id
+     * @param imageId  镜像id
+     * @return 指定镜像信息
+     */
+    @RequestMapping("/{regionId}/images/{imageId}")
+    @ResponseBody
+    public CompletionStage<JsonNode> describeImageAttribute(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            @PathVariable String regionId,
+            @PathVariable String imageId) {
+        return getCloudEntity(request)
+                .thenAccept(cloud -> imageService.describeImageAttribute(cloud, regionId, imageId))
+                .thenApply(x -> okFormat(OK.value(), x, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
+
+    /**
      * 创建镜像
      *
      * @param request  http请求
@@ -69,6 +89,28 @@ public class ImageController extends BaseController {
         return getCloudEntity(request)
                 .thenAccept(cloud -> imageService.createImage(cloud, reqCreImage))
                 .thenApply(x -> okFormat(OK.value(), null, response))
+                .exceptionally(e -> badFormat(e, response));
+    }
+
+    /**
+     * 删除镜像
+     *
+     * @param request  http请求
+     * @param response http响应
+     * @param regionId 区域id
+     * @param imageId  镜像id
+     * @return 操作结果
+     */
+    @DeleteMapping("/{regionId}/images/{imageId}")
+    @ResponseBody
+    public CompletionStage<JsonNode> deleteImage(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            @PathVariable String regionId,
+            @PathVariable String imageId) {
+        return getCloudEntity(request)
+                .thenAccept(cloud -> imageService.deleteImage(cloud, regionId, imageId))
+                .thenApply(x -> okFormat(OK.value(), x, response))
                 .exceptionally(e -> badFormat(e, response));
     }
 }

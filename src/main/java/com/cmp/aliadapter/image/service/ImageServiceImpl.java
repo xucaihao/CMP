@@ -1,13 +1,11 @@
 package com.cmp.aliadapter.image.service;
 
 import com.aliyuncs.IAcsClient;
-import com.aliyuncs.ecs.model.v20140526.CreateImageRequest;
-import com.aliyuncs.ecs.model.v20140526.DescribeImagesRequest;
-import com.aliyuncs.ecs.model.v20140526.DescribeImagesResponse;
-import com.aliyuncs.ecs.model.v20140526.DescribeRegionsResponse;
+import com.aliyuncs.ecs.model.v20140526.*;
 import com.cmp.aliadapter.common.*;
 import com.cmp.aliadapter.image.model.req.ReqCreImage;
 import com.cmp.aliadapter.image.model.res.ImageInfo;
+import com.cmp.aliadapter.image.model.res.ResImage;
 import com.cmp.aliadapter.image.model.res.ResImages;
 import com.cmp.aliadapter.region.model.res.ResRegions;
 import org.slf4j.Logger;
@@ -115,6 +113,39 @@ public class ImageServiceImpl implements ImageService {
     }
 
     /**
+     * 查询指定镜像
+     *
+     * @param cloud    云（用户提供ak、sk）
+     * @param regionId 区域id
+     * @param imageId  镜像id
+     * @return 指定镜像信息
+     */
+    @Override
+    public ResImage describeImageAttribute(CloudEntity cloud, String regionId, String imageId) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, regionId);
+            //设置参数
+            DescribeImagesRequest describeImagesRequest = new DescribeImagesRequest();
+            describeImagesRequest.setRegionId(regionId);
+            describeImagesRequest.setImageId("[\"" + imageId + "\"]");
+            try {
+                DescribeImagesResponse response =
+                        client.getAcsResponse(describeImagesRequest);
+                ImageInfo imageInfo = convertImage(response.getImages().get(0), regionId);
+                return new ResImage(imageInfo);
+            } catch (Exception e) {
+                logger.error("describeImageAttribute error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+                return null;
+            }
+        } else {
+            ImageInfo image = AliSimulator.get(ImageInfo.class, imageId);
+            return new ResImage(image);
+        }
+    }
+
+    /**
      * 创建镜像
      *
      * @param cloud       云
@@ -143,6 +174,32 @@ public class ImageServiceImpl implements ImageService {
             values.put("imageName", reqCreImage.getImageName());
             values.put("regionId", reqCreImage.getRegionId());
             AliSimulator.create(ImageInfo.class, reqCreImage.getInstanceId(), values);
+        }
+    }
+
+    /**
+     * 删除镜像
+     *
+     * @param cloud    云（用户提供ak、sk）
+     * @param regionId 区域id
+     * @param imageId  镜像id
+     */
+    @Override
+    public void deleteImage(CloudEntity cloud, String regionId, String imageId) {
+        if (AliClient.getStatus()) {
+            //初始化
+            IAcsClient client = initClient(cloud, regionId);
+            //设置参数
+            DeleteImageRequest deleteImageRequest = new DeleteImageRequest();
+            deleteImageRequest.setRegionId(regionId);
+            deleteImageRequest.setImageId(imageId);
+            // 发起请求
+            try {
+                client.getAcsResponse(deleteImageRequest);
+            } catch (Exception e) {
+                logger.error("deleteImage error: {}", e.getMessage());
+                ExceptionUtil.dealException(e);
+            }
         }
     }
 }
